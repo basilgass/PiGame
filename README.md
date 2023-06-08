@@ -1,2 +1,3 @@
-# PiGame
-Logical games for my website
+# pi-game
+
+games for my website

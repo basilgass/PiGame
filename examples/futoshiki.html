@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Futoshiki</title>
+
+	<style>
+		.futoshiki {
+			text-align: center;
+		}
+		.futoshiki-cell{
+			width: 3rem;
+			height: 3rem;
+			background-color: white;
+			border: thin solid black;
+			font-size: 2em;
+
+		}
+		.futoshiki-cell>div {
+			width: 100%;
+			height: 100%;
+			position: relative;
+			display: grid;
+			place-items: center;
+		}
+
+		.futoshiki-cell-suggestion {
+			padding: 0.2rem;
+			font-size: 0.7rem;
+			position: absolute;
+			inset: 0;
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			grid-template-rows: 1fr 1fr 1fr;
+			color: darkcyan;
+			background-color: transparent;
+		}
+		.futoshiki-corner {
+			width: 1rem;
+			height: 1rem;
+		}
+		.futoshiki-constraint-v {
+			width: 1rem;
+			height: 3rem;
+		}
+		.futoshiki-constraint-v.lesser-than:before {
+			content: '<';
+		}
+		.futoshiki-constraint-v.greater-than:before {
+			content: '>';
+		}
+		.futoshiki-constraint-h {
+			width: 3rem;
+			height: 1rem;
+		}
+
+		.futoshiki-constraint-h.lesser-than:before {
+			content: '^';
+		}
+		.futoshiki-constraint-h.greater-than:after {
+			content: '^';
+			display:inline-block;
+			transform: rotate(180deg);
+		}
+	</style>
+</head>
+<body>
+
+<div id="output"></div>
+<div id="solve-wrapper" style="margin-top:30px;display:grid;grid-template-columns: 1fr 1fr 1fr;"></div>
+</body>
+
+<script> var exports = {}; </script>
+
+<script type="module" src="futoshiki.js"></script>
+</html>

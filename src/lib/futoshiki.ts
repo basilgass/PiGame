@@ -311,9 +311,13 @@ export class Futoshiki {
 		const errors = this._checkForContradictions()
 
 		return {
-			result: errors.length===0 && this.cells.every(cell => cell.value),
+			result: errors.length===0 && this.isFilled(),
 			contradictions: errors
 		}
+	}
+
+	isFilled(): boolean {
+		return this.cells.every(cell => cell.value)
 	}
 
 	isSolvable(restoreKeyOnUnsolvable: string): boolean {
@@ -499,8 +503,7 @@ export class Futoshiki {
 			// 2. determine as unresolvable
 			// 3. find a solution.
 			// Test the result with the first suggestion
-
-
+			this.generateSteps[`guess-0`] = this.toHtml()
 			guessCell.suggestion.forEach(suggestion => {
 				// Restore the guesses.
 				this.cells.forEach(cell => cell.guessRestore(this._guessId))
@@ -511,16 +514,13 @@ export class Futoshiki {
 				// Try to solve using the normal way.
 				try {
 					let solved = this._solveLoop(numberOfSuggestion)
-					if (solved) {
-						solutionsCount++
-					}
-				} catch (e) {
-					// Contradiction !
+					if(solved){solutionsCount++}
+				}catch (error){
 				}
+
 			})
 		}
 
-		// console.log('Using guess to resolve: ', solutionsCount)
 		return solutionsCount === 1
 	}
 
@@ -955,14 +955,14 @@ class FutoshikiCell {
 
 	guessStore(id: number) {
 		this._guesses[id] = {
-			value: this.value,
+			value: this.userValue,
 			suggestions: [...this.suggestion]
 		}
 	}
 
 	guessRestore(id: number) {
 		this.value = this._guesses[id].value
-		this.suggestion = this._guesses[id].suggestions
+		this.suggestion = [...this._guesses[id].suggestions]
 	}
 
 	guessReset(id: number) {

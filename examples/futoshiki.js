@@ -24,31 +24,39 @@ import {Futoshiki} from "../build/module/lib/futoshiki.js";
 // 	[2,2,2,1],
 // ])
 
-let futo = new Futoshiki(5)
-futo.addValues([
-	[2,0,3],
-	[4,0,1],
-	[3,1,3],
-	[4,1,4],
-	[4,2,3]
-], true)
+// let futo = new Futoshiki(5)
+// futo.addValues([
+// 	[2,0,3],
+// 	[4,0,1],
+// 	[3,1,3],
+// 	[4,1,4],
+// 	[4,2,3]
+// ], true)
+//
+// futo.addConstraints([
+// 	[0,1,0,2],
+// 	[1,0,0,0],
+// 	[1,2,1,3],
+// 	[2,3,2,4],
+// 	[3,2,3,3],
+// 	[0,4,0,3],
+// 	[4,4,3,4]
+// ])
 
-futo.addConstraints([
-	[0,1,0,2],
-	[1,0,0,0],
-	[1,2,1,3],
-	[2,3,2,4],
-	[3,2,3,3],
-	[0,4,0,3],
-	[4,4,3,4]
-])
+let futo = new Futoshiki(4
+)
+futo.generate()
 
-console.log(futo.futoshiki)
 try {
-	futo.solve(10)
+	futo.solve()
 }catch {}
 
-document.getElementById('output').innerHTML = futo.toHtml()
-document.getElementById('solve-wrapper').innerHTML = futo.solveSteps.join("")
+console.log(futo.generateSteps)
+
+document.getElementById('output').innerHTML = futo.solveSteps[0]
+
+document.getElementById('generate-solution').innerHTML = futo.generateSteps.solution
+document.getElementById('generate-init').innerHTML = futo.generateSteps.init
+document.getElementById('generate-optimize').innerHTML = futo.generateSteps.optimized
 
 

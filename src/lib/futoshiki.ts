@@ -304,9 +304,9 @@ export class Futoshiki {
 	}
 
 	isSolved(): boolean {
-		try{
+		try {
 			this._solveHasContradiction()
-		}catch{
+		} catch {
 			return false
 		}
 
@@ -559,6 +559,7 @@ export class Futoshiki {
 	}
 
 	private _solveHasContradiction() {
+		let contradictionArray: string[] = []
 		// Detect if two same value are in the same row.
 		this.rows.forEach((lineCells, index) => {
 			const lineValues = lineCells
@@ -566,7 +567,7 @@ export class Futoshiki {
 				.filter(value => value > 0)
 
 			if (lineValues.length !== new Set(lineValues).size) {
-				throw `contradiction in line ${index + 1}`
+				contradictionArray.push(`contradiction in line ${index + 1}`)
 			}
 		})
 
@@ -577,16 +578,34 @@ export class Futoshiki {
 				.filter(value => value > 0)
 
 			if (lineValues.length !== new Set(lineValues).size) {
-				throw `contradiction in column ${index + 1}`
+				contradictionArray.push(`contradiction in column ${index + 1}`)
 			}
 		})
 
 		// Detect if a cell has no value and no suggestion.
 		this.cells.forEach(cell => {
 			if (cell.value === null && cell.default === null && cell.suggestion.length === 0) {
-				throw `contradiction in cell ${cell.cellKey}`
+				contradictionArray.push(`contradiction in cell ${cell.cellKey}: no value possible`)
 			}
 		})
+
+		// Detect if a cell is correctly greater or lesser than another cell.
+		this.cells.forEach(cell => {
+			cell.lesserThan.forEach(c => {
+				if (cell.value > this.futoshiki[c].value) {
+					contradictionArray.push(`contradiction in cell ${cell.cellKey} - it's not lesser than ${c}`)
+				}
+			})
+			cell.greaterThan.forEach(c => {
+				if (cell.value < this.futoshiki[c].value) {
+					contradictionArray.push(`contradiction in cell ${cell.cellKey} - it's not greater than ${c}`)
+				}
+			})
+		})
+
+		if(contradictionArray.length>0){
+			throw contradictionArray
+		}
 	}
 
 	private _solveReduceSuggestionByValue() {

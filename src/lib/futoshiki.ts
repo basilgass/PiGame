@@ -304,6 +304,12 @@ export class Futoshiki {
 	}
 
 	isSolved(): boolean {
+		try{
+			this._solveHasContradiction()
+		}catch{
+			return false
+		}
+
 		return this.cells.every(cell => cell.value)
 	}
 

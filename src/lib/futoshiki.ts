@@ -30,6 +30,15 @@ export class Futoshiki {
 		return this;
 	}
 
+	get contradictions(): string[] {
+		try {
+			this._checkForContradictions()
+		}catch(errors){
+			return errors
+		}
+		return []
+	}
+
 	private _generateSteps: { [Key: string]: string }
 
 	get generateSteps(): { [p: string]: string } {
@@ -305,9 +314,8 @@ export class Futoshiki {
 
 	isSolved(): boolean {
 		try {
-			this._solveHasContradiction()
+			this._checkForContradictions()
 		} catch {
-			return false
 		}
 
 		return this.cells.every(cell => cell.value)
@@ -558,7 +566,7 @@ export class Futoshiki {
 		return str.join(";")
 	}
 
-	private _solveHasContradiction() {
+	private _checkForContradictions() {
 		let contradictionArray: string[] = []
 		// Detect if two same value are in the same row.
 		this.rows.forEach((lineCells, index) => {
@@ -625,7 +633,7 @@ export class Futoshiki {
 
 		this._solveSteps.push(this.toHtml())
 
-		this._solveHasContradiction()
+		this._checkForContradictions()
 		// If there was any change, redo this script.
 		if (check !== this._solveToString()) {
 			this._solveReduceSuggestionByValue()
@@ -651,7 +659,7 @@ export class Futoshiki {
 
 		this._solveSteps.push(this.toHtml())
 
-		this._solveHasContradiction()
+		this._checkForContradictions()
 	}
 
 	private _solveFindOrphanValueInSuggestion(linesOfCells: FutoshikiCell[][]) {

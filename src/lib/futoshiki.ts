@@ -31,12 +31,7 @@ export class Futoshiki {
 	}
 
 	get contradictions(): string[] {
-		try {
-			this._checkForContradictions()
-		}catch(errors){
-			return errors
-		}
-		return []
+		return this._checkForContradictions()
 	}
 
 	private _generateSteps: { [Key: string]: string }
@@ -312,13 +307,13 @@ export class Futoshiki {
 		return solved
 	}
 
-	isSolved(): boolean {
-		try {
-			this._checkForContradictions()
-		} catch {
-		}
+	isSolved(): { result: boolean, contradictions: string[] } {
+		const errors = this._checkForContradictions()
 
-		return this.cells.every(cell => cell.value)
+		return {
+			result: errors.length===0 && this.cells.every(cell => cell.value),
+			contradictions: errors
+		}
 	}
 
 	isSolvable(restoreKeyOnUnsolvable: string): boolean {
@@ -555,7 +550,7 @@ export class Futoshiki {
 			loopCount++
 		}
 
-		return this.isSolved()
+		return this.isSolved().result
 	}
 
 	private _solveToString(): string {
@@ -566,7 +561,7 @@ export class Futoshiki {
 		return str.join(";")
 	}
 
-	private _checkForContradictions() {
+	private _checkForContradictions():string[] {
 		let contradictionArray: string[] = []
 		// Detect if two same value are in the same row.
 		this.rows.forEach((lineCells, index) => {
@@ -599,21 +594,26 @@ export class Futoshiki {
 
 		// Detect if a cell is correctly greater or lesser than another cell.
 		this.cells.forEach(cell => {
-			cell.lesserThan.forEach(c => {
-				if (cell.value > this.futoshiki[c].value) {
-					contradictionArray.push(`contradiction in cell ${cell.cellKey} - it's not lesser than ${c}`)
-				}
-			})
-			cell.greaterThan.forEach(c => {
-				if (cell.value < this.futoshiki[c].value) {
-					contradictionArray.push(`contradiction in cell ${cell.cellKey} - it's not greater than ${c}`)
-				}
-			})
+			if(cell.value) {
+				cell.lesserThan.forEach(c => {
+					if(this.futoshiki[c].value) {
+						if (cell.value > this.futoshiki[c].value) {
+							contradictionArray.push(`contradiction in cell ${cell.value} (${cell.cellKey}) - it's not lesser than ${this.futoshiki[c].value} (${c})`)
+						}
+					}
+				})
+				cell.greaterThan.forEach(c => {
+					if(this.futoshiki[c].value) {
+						if (cell.value < this.futoshiki[c].value) {
+							contradictionArray.push(`contradiction in cell ${cell.value} (${cell.cellKey}) - it's not greater than ${this.futoshiki[c].value} (${c})`)
+						}
+					}
+				})
+			}
 		})
 
-		if(contradictionArray.length>0){
-			throw contradictionArray
-		}
+		return contradictionArray
+
 	}
 
 	private _solveReduceSuggestionByValue() {
@@ -633,7 +633,9 @@ export class Futoshiki {
 
 		this._solveSteps.push(this.toHtml())
 
-		this._checkForContradictions()
+		const hasContradictions = this._checkForContradictions()
+		if(hasContradictions.length>0){throw hasContradictions}
+
 		// If there was any change, redo this script.
 		if (check !== this._solveToString()) {
 			this._solveReduceSuggestionByValue()
@@ -659,7 +661,8 @@ export class Futoshiki {
 
 		this._solveSteps.push(this.toHtml())
 
-		this._checkForContradictions()
+		const hasContradictions = this._checkForContradictions()
+		if(hasContradictions.length>0){throw hasContradictions}
 	}
 
 	private _solveFindOrphanValueInSuggestion(linesOfCells: FutoshikiCell[][]) {

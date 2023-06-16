@@ -1,5 +1,5 @@
 {
-	"name": "pi-game",
+	"name": "pi-games",
 	"version": "0.1.4",
 	"description": "games for my website",
 	"main": "build/main/index.js",

@@ -43,7 +43,7 @@ import {Futoshiki} from "../build/module/lib/futoshiki.js";
 // 	[4,4,3,4]
 // ])
 
-let futo = new Futoshiki(5)
+let futo = new Futoshiki(4)
 // futo
 // 	.addValues([
 // 		[3, 1, 2],
@@ -51,7 +51,7 @@ let futo = new Futoshiki(5)
 // 		[2, 3, 3]
 // 	])
 // 	.addConstraints([[1, 1, 0, 1]])
-futo.generate()
+futo.generate(6)
 
 try {
 	console.log('FUTOSHIKI GENERATED')

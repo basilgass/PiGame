@@ -14,18 +14,7 @@ export class Futoshiki {
 
 	constructor(size: number) {
 		this._size = size
-		this._futoshiki = {}
-		this._constrains = {}
-		this._solveSteps = []
-		this._generateSteps = {}
-		this._guessId = 0
-		this._saves = {}
-		// Build the main futoshiki variable
-		for (let row = 0; row < size; row++) {
-			for (let col = 0; col < size; col++) {
-				this._futoshiki[this.makeCellKey(col, row)] = new FutoshikiCell(col, row, this._size, null)
-			}
-		}
+		this._initialize()
 
 		return this;
 	}
@@ -238,7 +227,11 @@ export class Futoshiki {
 		return true
 	}
 
-	generate(): boolean {
+	generate(size: number): boolean {
+		// Initialize the value.s
+		this._size = size
+		this._initialize()
+
 		// Generate the values
 		this._generateValues()
 		// Generate the signs
@@ -265,11 +258,7 @@ export class Futoshiki {
 		this._generateSteps['init'] = this.toHtml()
 
 		// Reduce the number of given elements => increase difficulty.
-		let optimizeCount = 0
-		while (optimizeCount < 100) {
-			this._generateOptimize(optimizeCount)
-			optimizeCount++
-		}
+		this._generateOptimize()
 		// console.log(`Generation: optimization count = ${optimizeCount}`)
 
 		this._generateSteps['optimized'] = this.toHtml()
@@ -311,7 +300,7 @@ export class Futoshiki {
 		const errors = this._checkForContradictions()
 
 		return {
-			result: errors.length===0 && this.isFilled(),
+			result: errors.length === 0 && this.isFilled(),
 			contradictions: errors
 		}
 	}
@@ -340,6 +329,21 @@ export class Futoshiki {
 
 
 		return result
+	}
+
+	private _initialize(): void {
+		this._futoshiki = {}
+		this._constrains = {}
+		this._solveSteps = []
+		this._generateSteps = {}
+		this._guessId = 0
+		this._saves = {}
+		// Build the main futoshiki variable
+		for (let row = 0; row < this._size; row++) {
+			for (let col = 0; col < this._size; col++) {
+				this._futoshiki[this.makeCellKey(col, row)] = new FutoshikiCell(col, row, this._size, null)
+			}
+		}
 	}
 
 	private _generateInit(): void {
@@ -373,48 +377,40 @@ export class Futoshiki {
 		// console.log('Removed items: ', numberOfRemovedItems)
 	}
 
-	private _generateOptimize(optimizeId: number): boolean {
-		// Save before trying to optimize.
-		this.save(`optimize-${optimizeId}`)
-
+	private _generateOptimize(): boolean {
 		// Get a random cell with any value.
-		const cellsWithValues = this.cells.filter(cell => cell.default !== null || cell.lesserThan.length > 0 || cell.greaterThan.length > 0)
-		const cell: FutoshikiCell = randomItem(cellsWithValues)
+		const cellsWithValues: FutoshikiCell[] = shuffleArray(
+			this.cells
+				.filter(cell =>
+					cell.default !== null ||
+					cell.lesserThan.length > 0 ||
+					cell.greaterThan.length > 0
+				)
+		)
 
-		if (cell !== null) {
-			let available: string[] = []
-			if (cell.default !== null) {
-				available.push('default')
-			}
-			if (cell.lesserThan.length > 0) {
-				available.push('lesserThan')
-			}
-			if (cell.greaterThan.length > 0) {
-				available.push('greaterThan')
-			}
+		cellsWithValues.forEach((cell) => {
+			// Loop over each existing values and try to remove it.
+			const toRemove: (number | string)[] = shuffleArray(
+				[cell.default, ...cell.lesserThan, ...cell.greaterThan]
+			).filter(x => x !== null)
 
-			let keyToRemove: string,
-				whatToRemove = randomItem(available)
+			toRemove.forEach(item => {
+				// Save before trying to optimize.
+				this.save(`optimize`)
 
-			switch (whatToRemove) {
-				case 'default':
+				if (typeof item === "string") {
+					// It's a greater or lesser value
+					this._futoshiki[cell.cellKey].removeLesserThan(item)
+					this._futoshiki[item].removeGreaterThan(cell.cellKey)
+					this._futoshiki[item].removeLesserThan(cell.cellKey)
+
+				} else if (typeof item === "number") {
+					// It's a value
 					this._futoshiki[cell.cellKey].default = null
-					break
-				case 'lesserThan':
-					keyToRemove = randomItem(cell.lesserThan)
-					this._futoshiki[cell.cellKey].removeLesserThan(keyToRemove)
-					this._futoshiki[keyToRemove].removeGreaterThan(cell.cellKey)
-					break
-				case 'greaterThan':
-					keyToRemove = randomItem(cell.greaterThan)
-					this._futoshiki[cell.cellKey].removeGreaterThan(keyToRemove)
-					this._futoshiki[keyToRemove].removeLesserThan(cell.cellKey)
-					break
-			}
-
-			return this.isSolvable(`optimize-${optimizeId}`)
-		}
-
+				}
+				return this.isSolvable(`optimize`)
+			})
+		})
 		return false
 
 	}
@@ -514,8 +510,10 @@ export class Futoshiki {
 				// Try to solve using the normal way.
 				try {
 					let solved = this._solveLoop(numberOfSuggestion)
-					if(solved){solutionsCount++}
-				}catch (error){
+					if (solved) {
+						solutionsCount++
+					}
+				} catch (error) {
 				}
 
 			})
@@ -561,7 +559,7 @@ export class Futoshiki {
 		return str.join(";")
 	}
 
-	private _checkForContradictions():string[] {
+	private _checkForContradictions(): string[] {
 		let contradictionArray: string[] = []
 		// Detect if two same value are in the same row.
 		this.rows.forEach((lineCells, index) => {
@@ -594,16 +592,16 @@ export class Futoshiki {
 
 		// Detect if a cell is correctly greater or lesser than another cell.
 		this.cells.forEach(cell => {
-			if(cell.value) {
+			if (cell.value) {
 				cell.lesserThan.forEach(c => {
-					if(this.futoshiki[c].value) {
+					if (this.futoshiki[c].value) {
 						if (cell.value > this.futoshiki[c].value) {
 							contradictionArray.push(`contradiction in cell ${cell.value} (${cell.cellKey}) - it's not lesser than ${this.futoshiki[c].value} (${c})`)
 						}
 					}
 				})
 				cell.greaterThan.forEach(c => {
-					if(this.futoshiki[c].value) {
+					if (this.futoshiki[c].value) {
 						if (cell.value < this.futoshiki[c].value) {
 							contradictionArray.push(`contradiction in cell ${cell.value} (${cell.cellKey}) - it's not greater than ${this.futoshiki[c].value} (${c})`)
 						}
@@ -634,7 +632,9 @@ export class Futoshiki {
 		this._solveSteps.push(this.toHtml())
 
 		const hasContradictions = this._checkForContradictions()
-		if(hasContradictions.length>0){throw hasContradictions}
+		if (hasContradictions.length > 0) {
+			throw hasContradictions
+		}
 
 		// If there was any change, redo this script.
 		if (check !== this._solveToString()) {
@@ -662,7 +662,9 @@ export class Futoshiki {
 		this._solveSteps.push(this.toHtml())
 
 		const hasContradictions = this._checkForContradictions()
-		if(hasContradictions.length>0){throw hasContradictions}
+		if (hasContradictions.length > 0) {
+			throw hasContradictions
+		}
 	}
 
 	private _solveFindOrphanValueInSuggestion(linesOfCells: FutoshikiCell[][]) {
@@ -1041,6 +1043,12 @@ class FutoshikiCell {
 		}
 
 		return false
+	}
+
+	hasValueOrConstrain(): boolean {
+		return this.value !== null ||
+			this.lesserThan.length > 0 ||
+			this.greaterThan.length > 0
 	}
 
 	removeSuggestionGreaterOrEqualTo(value: number): boolean {
